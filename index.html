@@ -3,68 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <title>Tres en Raya PRO</title>
+
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        color: white;
-        text-align: center;
-        margin: 0;
-    }
+body{
+    font-family: Arial;
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+    text-align:center;
+}
 
-    h1 {
-        margin-top: 20px;
-    }
+h1{margin-top:15px;}
 
-    .selector {
-        margin: 20px;
-    }
+.banner{
+    background:#00cc99;
+    padding:10px;
+    font-size:20px;
+    font-weight:bold;
+    border-radius:10px;
+    margin:10px;
+}
 
-    button {
-        padding: 10px 20px;
-        margin: 5px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 18px;
-    }
+.payment-box{
+    background:rgba(255,255,255,0.1);
+    padding:15px;
+    margin:15px;
+    border-radius:10px;
+}
 
-    .x { background: #ff4d4d; color: white; }
-    .o { background: #4da6ff; color: white; }
+input{
+    width:80%;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    margin-top:10px;
+}
 
-    .board {
-        display: grid;
-        grid-template-columns: repeat(3, 100px);
-        gap: 10px;
-        justify-content: center;
-        margin-top: 20px;
-    }
+button{
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
 
-    .cell {
-        width: 100px;
-        height: 100px;
-        background: rgba(255,255,255,0.1);
-        font-size: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border-radius: 10px;
-    }
+.copy{background:#ffaa00;}
+.validate{background:#00ccff;}
+.x{background:#ff4d4d;}
+.o{background:#4da6ff;}
+.restart{background:#00cc99;}
 
-    .cell:hover {
-        background: rgba(255,255,255,0.2);
-    }
+.board{
+    display:grid;
+    grid-template-columns:repeat(3,100px);
+    gap:10px;
+    justify-content:center;
+    margin-top:20px;
+}
 
-    #status {
-        margin-top: 20px;
-        font-size: 20px;
-    }
+.cell{
+    width:100px;
+    height:100px;
+    background:rgba(255,255,255,0.1);
+    font-size:40px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border-radius:10px;
+    cursor:pointer;
+}
 
-    .restart {
-        margin-top: 20px;
-        background: #00cc99;
-    }
+#status{margin-top:15px;}
+#tries{margin-top:10px;font-size:18px;}
+.hidden{display:none;}
 </style>
 </head>
 
@@ -72,150 +82,212 @@
 
 <h1>🎮 Tres en Raya PRO</h1>
 
+<div class="banner">💰 Juega y gana hasta 3 USDT</div>
+
+<div class="payment-box">
+<p>Envía 1 USDT (BEP20) a esta dirección:</p>
+<p id="wallet">0x123456789ABCDEF123456789ABCDEF1234567890</p>
+<button class="copy" onclick="copyWallet()">Copiar dirección</button>
+
+<br>
+
+<input id="hashInput" placeholder="Pega el hash de la transacción">
+<br>
+<button class="validate" onclick="validateHash()">Validar Hash</button>
+
+<p id="hashStatus"></p>
+</div>
+
+<div id="gameArea" class="hidden">
+
+<div id="tries">Intentos: 5</div>
+
 <div class="selector">
-    <p>Elige tu símbolo:</p>
-    <button class="x" onclick="startGame('X')">❌</button>
-    <button class="o" onclick="startGame('O')">⭕</button>
+<p>Elige tu símbolo:</p>
+<button class="x" onclick="startGame('X')">❌</button>
+<button class="o" onclick="startGame('O')">⭕</button>
 </div>
 
 <div class="board" id="board"></div>
-
 <div id="status"></div>
 
 <button class="restart" onclick="restartGame()">Reiniciar</button>
 
+</div>
+
 <script>
-let board = ["","","","","","","","",""];
-let player = "X";
-let ai = "O";
-let gameActive = false;
+let board=["","","","","","","","",""];
+let player="X";
+let ai="O";
+let gameActive=false;
+let tries=5;
 
-function startGame(choice) {
-    player = choice;
-    ai = (choice === "X") ? "O" : "X";
-    gameActive = true;
-    board = ["","","","","","","","",""];
-    renderBoard();
+function copyWallet(){
+    navigator.clipboard.writeText(
+        document.getElementById("wallet").innerText
+    );
+    alert("Dirección copiada");
+}
 
-    document.getElementById("status").innerText = "Juego iniciado";
+function validateHash(){
+    let hash=document.getElementById("hashInput").value;
 
-    if (ai === "X") {
-        aiMove();
+    let regex=/^0x([A-Fa-f0-9]{64})$/;
+
+    if(regex.test(hash)){
+        document.getElementById("hashStatus").innerText="✅ Hash válido";
+        document.getElementById("gameArea").classList.remove("hidden");
+        tries=5;
+        updateTries();
+    }else{
+        document.getElementById("hashStatus").innerText="❌ Hash incorrecto";
     }
 }
 
-function renderBoard() {
-    const boardDiv = document.getElementById("board");
-    boardDiv.innerHTML = "";
-
-    board.forEach((cell, index) => {
-        const div = document.createElement("div");
-        div.classList.add("cell");
-        div.innerText = cell;
-        div.onclick = () => playerMove(index);
-        boardDiv.appendChild(div);
-    });
+function updateTries(){
+    document.getElementById("tries").innerText="Intentos: "+tries;
 }
 
-function playerMove(index) {
-    if (!gameActive || board[index] !== "") return;
-
-    board[index] = player;
-    renderBoard();
-
-    if (checkWinner(board, player)) {
-        endGame("🎉 Ganaste");
+function startGame(choice){
+    if(tries<=0){
+        alert("Debes pagar nuevamente");
         return;
     }
 
-    if (boardFull()) {
-        endGame("🤝 Empate");
+    player=choice;
+    ai=(choice==="X")?"O":"X";
+    gameActive=true;
+    board=["","","","","","","","",""];
+    renderBoard();
+
+    if(ai==="X") aiMove();
+}
+
+function renderBoard(){
+    let b=document.getElementById("board");
+    b.innerHTML="";
+
+    board.forEach((c,i)=>{
+        let div=document.createElement("div");
+        div.classList.add("cell");
+        div.innerText=c;
+        div.onclick=()=>playerMove(i);
+        b.appendChild(div);
+    });
+}
+
+function playerMove(i){
+    if(!gameActive||board[i]!="")return;
+
+    board[i]=player;
+    renderBoard();
+
+    if(checkWinner(board,player)){
+        winGame();
+        return;
+    }
+
+    if(full()){
+        endGame("Empate");
         return;
     }
 
     aiMove();
 }
 
-function aiMove() {
-    let bestScore = -Infinity;
-    let move;
+function aiMove(){
+    let best=-Infinity,move;
 
-    for (let i = 0; i < 9; i++) {
-        if (board[i] === "") {
-            board[i] = ai;
-            let score = minimax(board, 0, false);
-            board[i] = "";
-            if (score > bestScore) {
-                bestScore = score;
-                move = i;
+    for(let i=0;i<9;i++){
+        if(board[i]==""){
+            board[i]=ai;
+            let score=minimax(board,0,false);
+            board[i]="";
+            if(score>best){
+                best=score;
+                move=i;
             }
         }
     }
 
-    board[move] = ai;
+    board[move]=ai;
     renderBoard();
 
-    if (checkWinner(board, ai)) {
-        endGame("💻 El sistema gana");
+    if(checkWinner(board,ai)){
+        loseGame();
         return;
     }
 
-    if (boardFull()) {
-        endGame("🤝 Empate");
-    }
+    if(full()) endGame("Empate");
 }
 
-function minimax(newBoard, depth, isMaximizing) {
-    if (checkWinner(newBoard, ai)) return 10 - depth;
-    if (checkWinner(newBoard, player)) return depth - 10;
-    if (newBoard.every(cell => cell !== "")) return 0;
+function minimax(b,depth,max){
+    if(checkWinner(b,ai)) return 10-depth;
+    if(checkWinner(b,player)) return depth-10;
+    if(b.every(c=>c!="")) return 0;
 
-    if (isMaximizing) {
-        let best = -Infinity;
-        for (let i = 0; i < 9; i++) {
-            if (newBoard[i] === "") {
-                newBoard[i] = ai;
-                best = Math.max(best, minimax(newBoard, depth + 1, false));
-                newBoard[i] = "";
+    if(max){
+        let best=-Infinity;
+        for(let i=0;i<9;i++){
+            if(b[i]==""){
+                b[i]=ai;
+                best=Math.max(best,minimax(b,depth+1,false));
+                b[i]="";
             }
         }
         return best;
-    } else {
-        let best = Infinity;
-        for (let i = 0; i < 9; i++) {
-            if (newBoard[i] === "") {
-                newBoard[i] = player;
-                best = Math.min(best, minimax(newBoard, depth + 1, true));
-                newBoard[i] = "";
+    }else{
+        let best=Infinity;
+        for(let i=0;i<9;i++){
+            if(b[i]==""){
+                b[i]=player;
+                best=Math.min(best,minimax(b,depth+1,true));
+                b[i]="";
             }
         }
         return best;
     }
 }
 
-function checkWinner(b, p) {
-    const wins = [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8],[2,4,6]
-    ];
-    return wins.some(combo => combo.every(i => b[i] === p));
+function checkWinner(b,p){
+    const w=[[0,1,2],[3,4,5],[6,7,8],
+             [0,3,6],[1,4,7],[2,5,8],
+             [0,4,8],[2,4,6]];
+    return w.some(c=>c.every(i=>b[i]==p));
 }
 
-function boardFull() {
-    return board.every(cell => cell !== "");
+function full(){return board.every(c=>c!="");}
+
+function winGame(){
+    gameActive=false;
+
+    let addr=prompt("🎉 Ganaste! Ingresa tu dirección BEP20:");
+    if(addr){
+        let url="https://wa.me/158752291?text=Ganador%20USDT:%20"+addr;
+        window.open(url,"_blank");
+    }
 }
 
-function endGame(message) {
-    gameActive = false;
-    document.getElementById("status").innerText = message;
+function loseGame(){
+    tries--;
+    updateTries();
+    endGame("El sistema gana");
+
+    if(tries<=0){
+        alert("Se acabaron tus intentos, debes pagar nuevamente");
+        document.getElementById("gameArea").classList.add("hidden");
+    }
 }
 
-function restartGame() {
-    board = ["","","","","","","","",""];
-    gameActive = false;
+function endGame(msg){
+    gameActive=false;
+    document.getElementById("status").innerText=msg;
+}
+
+function restartGame(){
+    board=["","","","","","","","",""];
+    gameActive=false;
     renderBoard();
-    document.getElementById("status").innerText = "Elige símbolo para empezar";
 }
 
 renderBoard();

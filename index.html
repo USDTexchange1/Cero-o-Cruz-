@@ -82,7 +82,7 @@ button{
 
 <h1>🎮 Tres en Raya PRO</h1>
 
-<div class="banner">💰 Juega y gana hasta 3 USDT por cada juego</div>
+<div class="banner">💰 Juega y gana hasta 3 USDT por cada intento</div>
 
 <div class="payment-box">
 <p>Envía 1 USDT (BEP20) a esta dirección:</p>
@@ -122,6 +122,16 @@ let ai="O";
 let gameActive=false;
 let tries=5;
 
+// ================= HASH STORAGE =================
+function getUsedHashes(){
+    return JSON.parse(localStorage.getItem("usedHashes")) || [];
+}
+
+function saveUsedHashes(arr){
+    localStorage.setItem("usedHashes", JSON.stringify(arr));
+}
+// ================================================
+
 function copyWallet(){
     navigator.clipboard.writeText(
         document.getElementById("wallet").innerText
@@ -130,18 +140,30 @@ function copyWallet(){
 }
 
 function validateHash(){
-    let hash=document.getElementById("hashInput").value;
+    let hash=document.getElementById("hashInput").value.trim();
 
     let regex=/^0x([A-Fa-f0-9]{64})$/;
 
-    if(regex.test(hash)){
-        document.getElementById("hashStatus").innerText="✅ Hash válido";
-        document.getElementById("gameArea").classList.remove("hidden");
-        tries=5;
-        updateTries();
-    }else{
+    if(!regex.test(hash)){
         document.getElementById("hashStatus").innerText="❌ Hash incorrecto";
+        return;
     }
+
+    let usedHashes=getUsedHashes();
+
+    if(usedHashes.includes(hash)){
+        document.getElementById("hashStatus").innerText="⚠️ Este hash ya fue utilizado";
+        return;
+    }
+
+    usedHashes.push(hash);
+    saveUsedHashes(usedHashes);
+
+    document.getElementById("hashStatus").innerText="✅ Hash válido";
+    document.getElementById("gameArea").classList.remove("hidden");
+
+    tries=5;
+    updateTries();
 }
 
 function updateTries(){
